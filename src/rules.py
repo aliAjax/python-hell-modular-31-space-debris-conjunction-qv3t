@@ -1,8 +1,12 @@
 from .domain import DomainError
 
 ENTITY_TYPE = "space_conjunction"
+SATELLITE_ENTITY_TYPE = "satellite"
+PLAN_ENTITY_TYPE = "avoidance_plan"
 INITIAL_STATUS = "pending"
+SATELLITE_STATUS = "active"
 CREATE_ROLES = {"analyst"}
+SATELLITE_ROLES = {"analyst", "coordinator"}
 SOURCE_ROLES = {"analyst", "operator"}
 ACTION_ROLES = {
     "assess": {"analyst"},
@@ -15,7 +19,21 @@ ACTION_ROLES = {
 }
 ENFORCE_REGION = False
 REGION_SENSITIVE_ACTIONS = set()
-ACTION_REQUIRES_VERSION = {"approve", "execute", "resolve", "cancel"}
+ACTION_REQUIRES_VERSION = {"approve", "execute", "resolve", "cancel", "report_revision"}
+
+# 方案排队优先级：风险等级越高、交会时刻越早，越优先占用燃料
+RISK_ORDER = {"high": 0, "medium": 1, "low": 2}
+
+
+def queue_priority(plan):
+    payload = plan.get("payload", {})
+    level = payload.get("risk_level", "low")
+    tca = payload.get("tca", "9999")
+    return (RISK_ORDER.get(level, 3), tca, plan.get("id", 0))
+
+
+def order_queue(plans):
+    return sorted(plans, key=queue_priority)
 
 
 def assess(payload):

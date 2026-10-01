@@ -1,7 +1,11 @@
 <!doctype html>
 <html lang="zh-CN"><meta charset="utf-8"><title>太空碎片接近协调</title>
-<body><h1>太空碎片接近预警与规避协调</h1><p>服务已启动。使用 JSON API 创建接近事件、记录来源、执行评估和协调动作。</p><pre>GET /health
-GET /api/state
+<body><h1>太空碎片接近预警与规避协调 · 调度账</h1><p>把接近事件、规避方案、卫星燃料和轨道修订接成一张调度账：方案按风险等级和交会时刻排队并占用燃料，余量不足即拒绝并说明未排原因；同一方案晚到的变更按版本校验拒绝，先到的占用保留；轨道数据更新后，依赖旧数据的批准和占用立即失效重算，已执行指令保留原记录，未执行方案重新评估；越权变更直接拒绝并留下审计记录。</p><pre>GET  /health
+GET  /api/state
+GET  /api/schedule
+GET  /api/satellites
+POST /api/satellites
 POST /api/items
 POST /api/items/{id}/sources
-POST /api/items/{id}/actions</pre></body></html>
+POST /api/items/{id}/actions
+GET  /api/items/{id}/audit</pre></body></html>
