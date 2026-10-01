@@ -5,6 +5,9 @@ from http.server import ThreadingHTTPServer
 from src.repository import Repository
 from src.service import Service
 from src.http_api import build_handler
+from src.ledger.repository import LedgerRepository
+from src.ledger.service import LedgerService
+from src.ledger.http import LedgerRouter
 
 
 def main():
@@ -16,14 +19,20 @@ def main():
 
     repo = Repository(args.db)
     repo.initialize()
+    ledger_repo = LedgerRepository(args.db)
+    ledger_repo.initialize()
     if args.init:
         print("initialized: %s" % args.db)
+        ledger_repo.close()
         return
 
     service = Service(repo)
+    ledger_router = LedgerRouter(LedgerService(ledger_repo))
     static_dir = os.path.join(os.path.dirname(__file__), "static")
-    server = ThreadingHTTPServer(("127.0.0.1", args.port), build_handler(service, static_dir))
+    server = ThreadingHTTPServer(
+        ("127.0.0.1", args.port), build_handler(service, static_dir, ledger_router))
     server.service = service
+    server.ledger = ledger_router.ledger
     print("space debris conjunction service listening on http://127.0.0.1:%d" % args.port)
     try:
         server.serve_forever()
@@ -31,6 +40,7 @@ def main():
         pass
     finally:
         server.server_close()
+        ledger_repo.close()
 
 
 if __name__ == "__main__":

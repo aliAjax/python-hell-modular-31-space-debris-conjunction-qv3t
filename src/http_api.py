@@ -1,5 +1,4 @@
 import json
-import mimetypes
 import os
 from http.server import BaseHTTPRequestHandler
 from urllib.parse import urlparse
@@ -7,7 +6,7 @@ from urllib.parse import urlparse
 from .domain import DomainError
 
 
-def build_handler(service, static_dir):
+def build_handler(service, static_dir, ledger_router=None):
     class Handler(BaseHTTPRequestHandler):
         server_version = "ModularPythonHell/1.0"
 
@@ -45,6 +44,8 @@ def build_handler(service, static_dir):
 
         def do_GET(self):
             try:
+                if ledger_router is not None and ledger_router.dispatch(self, "GET", self.path):
+                    return
                 path = urlparse(self.path).path
                 if path == "/health":
                     return self._send(200, {"status": "ok"})
@@ -72,6 +73,8 @@ def build_handler(service, static_dir):
         def do_POST(self):
             actor = role = region = None
             try:
+                if ledger_router is not None and ledger_router.dispatch(self, "POST", self.path):
+                    return
                 actor, role, region = self._identity()
                 path = urlparse(self.path).path
                 payload = self._json_body()
